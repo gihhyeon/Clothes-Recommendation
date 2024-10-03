@@ -27,7 +27,7 @@ out/
 !**/src/test/**/out/
 *.yml
 application.yaml
-storage
+
 
 
 ### NetBeans ###
@@ -46,3 +46,4 @@ gradle/
 gradlew
 gradlew.bat
 settings.gradle
+/storage/
