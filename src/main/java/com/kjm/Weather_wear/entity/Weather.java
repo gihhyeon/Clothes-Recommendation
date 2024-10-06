@@ -1,10 +1,10 @@
 package com.kjm.Weather_wear.entity;
 
-import jakarta.persistence.Embeddable;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
