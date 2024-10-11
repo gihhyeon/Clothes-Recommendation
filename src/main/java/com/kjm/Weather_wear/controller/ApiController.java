@@ -1,7 +1,6 @@
 package com.kjm.Weather_wear.controller;
 
 import com.kjm.Weather_wear.dto.RegionDTO;
-import com.kjm.Weather_wear.entity.Region;
 import com.kjm.Weather_wear.service.RegionService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
