@@ -1,6 +1,8 @@
 package com.kjm.Weather_wear.controller;
 
+import com.kjm.Weather_wear.dto.RegionDTO;
 import com.kjm.Weather_wear.entity.Region;
+import com.kjm.Weather_wear.service.RegionService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +30,15 @@ public class ApiController {
 
     @Value("${resources.location}")
     private String resourceLocation;
-    
+
+    private final RegionService regionService;
+
     private final EntityManager em;
 
     @PostMapping("/region")
     @Transactional
     public ResponseEntity<String> resetRegionList() {
-        String fileLocation = resourceLocation + "/init/regionList.csv"; 
+        String fileLocation = resourceLocation + "/init/regionList.csv";
         Path path = Paths.get(fileLocation);
         URI uri = path.toUri();
 
@@ -45,14 +49,15 @@ public class ApiController {
             while ((line = br.readLine()) != null) {
                 String[] splits = line.split(",");
                 if (splits.length == 6) {
-                    em.persist(new Region(
-                        Long.parseLong(splits[0]), 
-                        splits[1], 
-                        splits[2], 
-                        splits[3], 
-                        Integer.parseInt(splits[4]), 
-                        Integer.parseInt(splits[5])
-                    ));
+                    RegionDTO regionDTO = new RegionDTO(
+                            Long.parseLong(splits[0]),
+                            splits[1],
+                            splits[2],
+                            splits[3],
+                            Integer.parseInt(splits[4]),
+                            Integer.parseInt(splits[5])
+                    );
+                    regionService.saveRegion(regionDTO); // 서비스 메서드 호출
                 } else {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("잘못된 CSV 형식");
                 }
