@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -44,28 +44,27 @@ public class WeatherApiController {
 
         // 1. 날씨 정보를 요청한 지역 조회
         Region region = em.find(Region.class, regionId);
-        StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst");
 
         // 2. 요청 시각 조회
         LocalDateTime now = LocalDateTime.now();
         String yyyyMMdd = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         int hour = now.getHour();
         int min = now.getMinute();
-        if (min <= 30) { // 해당 시각 발표 전에는 자료가 없음 - 이전 시각을 기준으로 해야 함
+        if (min <= 30) {
             hour -= 1;
         }
-        String hourStr = hour + "00"; // 정시 기준
+        String hourStr = hour + "00";
         String nx = Integer.toString(region.getNx());
         String ny = Integer.toString(region.getNy());
-        String currentChangeTime = now.format(DateTimeFormatter.ofPattern("yy.MM.dd")) + hour;
+        String currentChangeTime = now.format(DateTimeFormatter.ofPattern("yy.MM.dd HH"));
 
         // 기준 시각 조회 자료가 이미 존재하고 있다면 API 요청 없이 기존 자료 그대로 넘김
-        Weather prevWeater = region.getWeather();
-        if (prevWeater != null && prevWeater.getLastUpdateTime() != null) {
-            if (prevWeater.getLastUpdateTime().equals(currentChangeTime)) {
+        Weather prevWeather = region.getWeather();
+        if (prevWeather != null && prevWeather.getLastUpdateTime() != null) {
+            if (prevWeather.getLastUpdateTime().equals(currentChangeTime)) {
                 log.info("기존 자료를 재사용합니다.");
                 WeatherResponseDTO dto = WeatherResponseDTO.builder()
-                        .weather(prevWeater)
+                        .weather(prevWeather)
                         .message("OK").build();
                 return ResponseEntity.ok(dto);
             }
@@ -74,16 +73,20 @@ public class WeatherApiController {
         log.info("API 요청 발송 >>> 지역: {}, 연월일: {}, 시각: {}", region, yyyyMMdd, hourStr);
 
         try {
-            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + serviceKey);
-            urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
-            urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("1000", "UTF-8")); /*한 페이지 결과 수*/
-            urlBuilder.append("&" + URLEncoder.encode("dataType","UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON) Default: XML*/
-            urlBuilder.append("&" + URLEncoder.encode("base_date","UTF-8") + "=" + URLEncoder.encode(yyyyMMdd, "UTF-8")); /*‘21년 6월 28일 발표*/
-            urlBuilder.append("&" + URLEncoder.encode("base_time","UTF-8") + "=" + URLEncoder.encode(hourStr, "UTF-8")); /*06시 발표(정시단위) */
-            urlBuilder.append("&" + URLEncoder.encode("nx","UTF-8") + "=" + URLEncoder.encode(nx, "UTF-8")); /*예보지점의 X 좌표값*/
-            urlBuilder.append("&" + URLEncoder.encode("ny","UTF-8") + "=" + URLEncoder.encode(ny, "UTF-8")); /*예보지점의 Y 좌표값*/
+            // UriComponentsBuilder 사용
+            String urlString = UriComponentsBuilder.fromHttpUrl("http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst")
+                    .queryParam("serviceKey", serviceKey)
+                    .queryParam("pageNo", "1")
+                    .queryParam("numOfRows", "1000")
+                    .queryParam("dataType", "JSON")
+                    .queryParam("base_date", yyyyMMdd)
+                    .queryParam("base_time", hourStr)
+                    .queryParam("nx", nx)
+                    .queryParam("ny", ny)
+                    .build()
+                    .toUriString();
 
-            URL url = new URL(urlBuilder.toString());
+            URL url = new URL(urlString);
             log.info("request url: {}", url);
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -91,7 +94,7 @@ public class WeatherApiController {
             conn.setRequestProperty("Content-type", "application/json");
 
             BufferedReader rd;
-            if(conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
+            if (conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
                 rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             } else {
                 rd = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
