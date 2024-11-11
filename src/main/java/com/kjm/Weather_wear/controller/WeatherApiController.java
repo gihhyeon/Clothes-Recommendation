@@ -4,6 +4,7 @@ package com.kjm.Weather_wear.controller;
 import com.kjm.Weather_wear.dto.WeatherResponseDTO;
 import com.kjm.Weather_wear.entity.Region;
 import com.kjm.Weather_wear.entity.Weather;
+import com.kjm.Weather_wear.service.ClothingRecommendationService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -34,13 +36,15 @@ import java.time.format.DateTimeFormatter;
 public class WeatherApiController {
 
     private final EntityManager em;
+    // ClothingRecommendationService 의존성 추가
+    private final ClothingRecommendationService clothingRecommendationService;
 
     @Value("${weatherApi.serviceKey}")
     private String serviceKey;
 
     @GetMapping
     @Transactional
-    public ResponseEntity<WeatherResponseDTO> getRegionWeather(@RequestParam Long regionId) {
+    public ResponseEntity<WeatherResponseDTO> getRegionWeather(@RequestParam Long regionId, @RequestParam String userType) {
 
         // 1. 날씨 정보를 요청한 지역 조회
         Region region = em.find(Region.class, regionId);
@@ -72,6 +76,8 @@ public class WeatherApiController {
 
         log.info("API 요청 발송 >>> 지역: {}, 연월일: {}, 시각: {}", region, yyyyMMdd, hourStr);
 
+        Double rainAmount;
+        Double temp;
         try {
             // UriComponentsBuilder 사용
             String urlString = UriComponentsBuilder.fromHttpUrl("http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst")
@@ -111,9 +117,9 @@ public class WeatherApiController {
             //// 응답 수신 완료 ////
             //// 응답 결과를 JSON 파싱 ////
 
-            Double temp = null;
+            temp = null;
             Double humid = null;
-            Double rainAmount = null;
+            rainAmount = null;
 
             JSONObject jObject = new JSONObject(data);
             JSONObject response = jObject.getJSONObject("response");
@@ -121,7 +127,7 @@ public class WeatherApiController {
             JSONObject items = body.getJSONObject("items");
             JSONArray jArray = items.getJSONArray("item");
 
-            for(int i = 0; i < jArray.length(); i++) {
+            for (int i = 0; i < jArray.length(); i++) {
                 JSONObject obj = jArray.getJSONObject(i);
                 String category = obj.getString("category");
                 double obsrValue = obj.getDouble("obsrValue");
