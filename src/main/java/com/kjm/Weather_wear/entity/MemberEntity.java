@@ -24,6 +24,9 @@ public class MemberEntity {
     @Column
     private String memberName; // 이름
 
+    @Column
+    private String userType; // 유저 타입
+
     @Builder
     public static MemberEntity toMemberEntity(MemberDTO memberDTO) {
         MemberEntity memberEntity = new MemberEntity();
@@ -32,6 +35,7 @@ public class MemberEntity {
         memberEntity.memberEmail = memberDTO.getMemberEmail();
         memberEntity.memberPassword = memberDTO.getMemberPassword();
         memberEntity.memberName = memberDTO.getMemberName();
+        memberEntity.userType = memberDTO.getUserType();
 
         return memberEntity;
     }
@@ -44,6 +48,7 @@ public class MemberEntity {
         memberEntity.memberEmail = memberDTO.getMemberEmail();
         memberEntity.memberPassword = memberDTO.getMemberPassword();
         memberEntity.memberName = memberDTO.getMemberName();
+        memberEntity.userType = memberDTO.getUserType();
 
         return memberEntity;
     }
