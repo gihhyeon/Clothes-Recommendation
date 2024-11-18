@@ -4,97 +4,94 @@ import com.kjm.Weather_wear.dto.MemberDTO;
 import com.kjm.Weather_wear.service.MemberService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/members") // RESTful 규칙에 따라 URL 설정
 public class MemberController {
     private final MemberService memberService;
 
+    /**
+     * 회원가입 요청
+     * POST /api/members
+     */
+    @PostMapping
+    public ResponseEntity<String> save(@RequestBody MemberDTO memberDTO) {
+        memberService.save(memberDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 성공");
+    }
 
     /**
-     * save.html에서 /member/save 호출 → @GetMapping으로 페이지 출력 요청 → @PostMapping에서 action 수행
-     * request → Controller에서 받기 → DTO 형태로 변환 → Entity로 변환 → Service에서 Repository를 사용하여 DB 저장
+     * 로그인 요청
+     * POST /api/members/login
      */
-    // 회원가입 페이지 출력 요청
-    @GetMapping("/member/save")
-    public String saveForm() {
-        return "save";
-    }
-
-    @PostMapping("/member/save")
-    public String join(@ModelAttribute MemberDTO memberDTO) {
-        System.out.println("MemberController.save");
-        System.out.println("memberDTO = " + memberDTO);
-        memberService.save(memberDTO);
-
-        return "index";
-    }
-
-    @GetMapping("/member/login")
-    public String loginForm() {
-        return "login";
-    }
-
-    @PostMapping("/member/login")
-    public String login(@ModelAttribute MemberDTO memberDTO, HttpSession session) {
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody MemberDTO memberDTO, HttpSession session) {
         MemberDTO loginResult = memberService.login(memberDTO);
         if (loginResult != null) {
-            // login 성공
             session.setAttribute("loginEmail", loginResult.getMemberEmail());
-            return "main";
+            return ResponseEntity.ok(loginResult); // 로그인 성공 시 사용자 정보 반환
         } else {
-            // login 실패
-            return "login";
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패");
         }
     }
 
-    @GetMapping("/member/")
-    public String findAll(Model model) {
+    /**
+     * 회원 목록 조회
+     * GET /api/members
+     */
+    @GetMapping
+    public ResponseEntity<List<MemberDTO>> findAll() {
         List<MemberDTO> memberDTOList = memberService.findAll();
-        // 어떠한 html로 가져갈 데이터가 있다면 model 사용
-        model.addAttribute("memberList", memberDTOList);
-        return "list";
+        return ResponseEntity.ok(memberDTOList); // HTTP 200 OK와 함께 데이터 반환
     }
 
-    @GetMapping("/member/{id}")
-    public String findById(@PathVariable Long id, Model model) {
+    /**
+     * 회원 상세 조회
+     * GET /api/members/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> findById(@PathVariable Long id) {
         MemberDTO memberDTO = memberService.findById(id);
-        model.addAttribute("member", memberDTO);
-        return "detail";
+        if (memberDTO != null) {
+            return ResponseEntity.ok(memberDTO);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("회원 정보가 존재하지 않습니다.");
+        }
     }
 
-    @GetMapping("/member/update")
-    public String updateForm(HttpSession session, Model model) {
-        String myEmail = (String) session.getAttribute("loginEmail");
-        MemberDTO memberDTO = memberService.updateForm(myEmail);
-        model.addAttribute("updateMember", memberDTO);
-        return "update";
-    }
-
-    @PostMapping("/member/update")
-    public String update(@ModelAttribute MemberDTO memberDTO) {
+    /**
+     * 회원 정보 수정 요청
+     * PUT /api/members
+     */
+    @PutMapping
+    public ResponseEntity<String> update(@RequestBody MemberDTO memberDTO) {
         memberService.update(memberDTO);
-        return "redirect:/member/" + memberDTO.getId();
+        return ResponseEntity.ok("회원정보 수정 완료");
     }
 
-    @GetMapping("/member/delete/{id}")
-    public String deleteById(@PathVariable Long id) {
+    /**
+     * 회원 삭제 요청
+     * DELETE /api/members/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteById(@PathVariable Long id) {
         memberService.deleteById(id);
-        return "redirect:/member/";
+        return ResponseEntity.ok("회원 삭제 완료");
     }
 
-    @GetMapping("/member/logout")
-    public String logout(HttpSession session) {
+    /**
+     * 로그아웃 요청
+     * POST /api/members/logout
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpSession session) {
         session.invalidate();
-        return "index";
+        return ResponseEntity.ok("로그아웃 완료");
     }
-
 }
