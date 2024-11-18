@@ -22,8 +22,13 @@ public class MemberController {
      */
     @PostMapping
     public ResponseEntity<String> save(@RequestBody MemberDTO memberDTO) {
-        memberService.save(memberDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 성공");
+        boolean success = memberService.save(memberDTO);
+        if (success) {
+            return ResponseEntity.status(HttpStatus.CREATED).body("회원가입 성공");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("회원가입 실패");
+        }
+
     }
 
     /**

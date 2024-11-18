@@ -16,11 +16,22 @@ public class MemberService {
 
     private final MemberRepository memberRepository; // jpa, mysql 의존성 추가
 
-    public void save(MemberDTO memberDTO) {
-        // request -> DTO -> Entity -> Repository에서 save
-        MemberEntity memberEntity = MemberEntity.toMemberEntity(memberDTO);
-        memberRepository.save(memberEntity);
-        //Repository의 save메서드 호출 (조건. entity 객체를 넘겨줘야 함)
+    public boolean save(MemberDTO memberDTO) {
+        try {
+            // 이메일 중복 여부 확인
+            boolean exists = memberRepository.findByMemberEmail(memberDTO.getMemberEmail()).isPresent();
+            if (exists) {
+                return false; // 이미 존재하는 이메일
+            }
+
+            // 저장 수행
+            MemberEntity memberEntity = MemberEntity.toMemberEntity(memberDTO);
+            memberRepository.save(memberEntity);
+            return true; // 성공적으로 저장됨
+        } catch (Exception e) {
+            // 예외 발생 시 false 반환
+            return false;
+        }
     }
 
     public MemberDTO login(MemberDTO memberDTO) {
