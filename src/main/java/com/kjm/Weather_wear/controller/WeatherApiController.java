@@ -4,6 +4,7 @@ package com.kjm.Weather_wear.controller;
 import com.kjm.Weather_wear.dto.WeatherResponseDTO;
 import com.kjm.Weather_wear.entity.Region;
 import com.kjm.Weather_wear.entity.Weather;
+import com.kjm.Weather_wear.repository.RegionRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,16 +35,26 @@ import java.time.format.DateTimeFormatter;
 public class WeatherApiController {
 
     private final EntityManager em;
+    private final RegionRepository regionRepository;
 
     @Value("${weatherApi.serviceKey}")
     private String serviceKey;
 
     @GetMapping
     @Transactional
-    public ResponseEntity<WeatherResponseDTO> getRegionWeather(@RequestParam Long regionId) {
+    public ResponseEntity<WeatherResponseDTO> getRegionWeather(@RequestParam int nx, @RequestParam int ny) {
 
-        // 1. 날씨 정보를 요청한 지역 조회
-        Region region = em.find(Region.class, regionId);
+        // 1. nx, ny를 기준으로 지역 조회
+        Region region = regionRepository.findAll()
+                .stream()
+                .filter(r -> r.getNx() == nx && r.getNy() == ny)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("해당 좌표에 해당하는 지역이 없습니다."));
+
+        // 지역명을 가져오기 위해 toString() 활용
+        String regionName = region.toString();
+
+        log.info("Region found: {}", region);
 
         // 2. 요청 시각 조회
         LocalDateTime now = LocalDateTime.now();
@@ -54,11 +65,9 @@ public class WeatherApiController {
             hour -= 1;
         }
         String hourStr = hour + "00";
-        String nx = Integer.toString(region.getNx());
-        String ny = Integer.toString(region.getNy());
         String currentChangeTime = now.format(DateTimeFormatter.ofPattern("yy.MM.dd HH"));
 
-        // 기준 시각 조회 자료가 이미 존재하고 있다면 API 요청 없이 기존 자료 그대로 넘김
+        // 3. 기준 시각 조회 자료가 이미 존재하고 있다면 API 요청 없이 기존 자료 그대로 넘김
         Weather prevWeather = region.getWeather();
         if (prevWeather != null && prevWeather.getLastUpdateTime() != null) {
             if (prevWeather.getLastUpdateTime().equals(currentChangeTime)) {
@@ -141,14 +150,20 @@ public class WeatherApiController {
 
             Weather weather = new Weather(temp, rainAmount, humid, currentChangeTime);
             region.updateRegionWeather(weather); // DB 업데이트
+            regionRepository.save(region);
+
             WeatherResponseDTO dto = WeatherResponseDTO.builder()
                     .weather(weather)
-                    .message("OK").build();
+                    .regionName(regionName)
+                    .message("OK")
+                    .build();
             return ResponseEntity.ok(dto);
         } catch (IOException e) {
             WeatherResponseDTO dto = WeatherResponseDTO.builder()
                     .weather(null)
-                    .message("날씨 정보를 불러오는 중 오류가 발생했습니다").build();
+                    .regionName(regionName)
+                    .message("날씨 정보를 불러오는 중 오류가 발생했습니다")
+                    .build();
             return ResponseEntity.ok(dto);
         } catch (JSONException e) {
             throw new RuntimeException(e);

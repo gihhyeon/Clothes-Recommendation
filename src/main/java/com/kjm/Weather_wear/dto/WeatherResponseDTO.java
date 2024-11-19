@@ -10,4 +10,5 @@ public class WeatherResponseDTO {
 
     private Weather weather;
     private String message;
+    private String regionName;
 }
