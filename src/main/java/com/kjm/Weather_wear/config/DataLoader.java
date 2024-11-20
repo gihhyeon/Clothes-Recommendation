@@ -2,21 +2,17 @@ package com.kjm.Weather_wear.config;
 
 import com.kjm.Weather_wear.entity.Clothing;
 import com.kjm.Weather_wear.repository.ClothingRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-@Configuration
-public class DataLoader {
+@Component
+@RequiredArgsConstructor
+public class DataLoader implements CommandLineRunner {
 
     private final ClothingRepository clothingRepository;
 
-    public DataLoader(ClothingRepository clothingRepository) {
-        this.clothingRepository = clothingRepository;
-    }
-
-    @Autowired
+    @Override
     public void run(String... args) throws Exception {
         // 상의
         addClothingIfNotExists("상의", "반팔", 27, 50);

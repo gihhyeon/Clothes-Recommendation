@@ -14,9 +14,9 @@ public class ClothingRecommendationService {
 
     private final ClothingRepository clothingRepository;
 
-    public ClothingResponseDTO recommendClothing(double temp, String userType) {
+    public ClothingResponseDTO recommendClothing(double temperature, String userType) {
         // 1. 사용자 민감도를 반영한 기온 조정
-        int adjustedTemperature = adjustTemperatureForUserType((int) temp, userType);
+        int adjustedTemperature = adjustTemperatureForUserType((int) temperature, userType);
 
         // 2. DB에서 추천 기온에 맞는 옷 조회
         List<Clothing> recommendedClothing = clothingRepository.findByTemperatureRange(adjustedTemperature);
@@ -25,14 +25,14 @@ public class ClothingRecommendationService {
         return new ClothingResponseDTO(adjustedTemperature, recommendedClothing);
     }
 
-    private int adjustTemperatureForUserType(int temp, String userType) {
+    private int adjustTemperatureForUserType(int temperature, String userType) {
         switch (userType) {
             case "더위를 잘 타는 사람":
-                return temp - 3;
+                return temperature - 3;
             case "추위를 잘 타는 사람":
-                return temp + 3;
+                return temperature + 3;
             default: // 평균
-                return temp;
+                return temperature;
         }
     }
 }
