@@ -57,7 +57,7 @@ public class WeatherApiController {
         LocalDateTime now = LocalDateTime.now();
         String yyyyMMdd = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        // 1. 유효한 base_time 배열
+        // 유효한 base_time 배열
         int[] validBaseTimes = {2, 5, 8, 11, 14, 17, 20, 23}; // 제공되는 base_time (시간)
 
         int hour = now.getHour();
@@ -82,7 +82,7 @@ public class WeatherApiController {
         }
 
         String hourStr = String.format("%02d00", baseTime); // base_time을 "0200" 형식으로 변환
-        // 3. currentChangeTime 정의
+        // currentChangeTime 정의
         String currentChangeTime = yyyyMMdd + " " + String.format("%02d", baseTime);
 
 
@@ -95,7 +95,8 @@ public class WeatherApiController {
                 log.info("기존 자료를 재사용합니다.");
                 WeatherResponseDTO dto = WeatherResponseDTO.builder()
                         .weather(prevWeather)
-                        .message("OK").build();
+                        .message("OK")
+                        .build();
                 return ResponseEntity.ok(dto);
             }
         }
