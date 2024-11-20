@@ -9,4 +9,5 @@ import java.util.List;
 @AllArgsConstructor
 public class ClothingResponseDTO {
     private List<String> recommendedClothing; // 추천된 옷 리스트
+    private int adjustedTemperature;        // 조정된 기온
 }
