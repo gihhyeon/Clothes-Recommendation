@@ -67,11 +67,6 @@ public class WeatherApiController {
         int min = now.getMinute();
         int baseTime = 0;
 
-//        if (min <= 30) {
-//            hour -= 1;
-//        }
-//        String hourStr = hour + "00";
-//        String currentChangeTime = now.format(DateTimeFormatter.ofPattern("yy.MM.dd HH"));
 
         for (int i = 0; i < validBaseTimes.length; i++) {
             int validHour = validBaseTimes[i];
@@ -83,7 +78,7 @@ public class WeatherApiController {
             }
         }
 
-// 자정 이전(첫 번째 제공 시간 이전) 처리
+        // 자정 이전(첫 번째 제공 시간 이전) 처리
         if (hour < validBaseTimes[0] || (hour == validBaseTimes[0] && min < 10)) {
             baseTime = validBaseTimes[validBaseTimes.length - 1]; // 전날 마지막 base_time
             yyyyMMdd = now.minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd")); // 날짜를 전날로 변경
