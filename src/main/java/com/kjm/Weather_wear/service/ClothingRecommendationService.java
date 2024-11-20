@@ -63,7 +63,6 @@ public class ClothingRecommendationService {
         } else if (temperature >= 5) {
             recommendations.add("무스탕");
             recommendations.add("코트");
-            recommendations.add("얇은 자켓");
         } else {
             recommendations.add("코트");
             recommendations.add("패딩");
