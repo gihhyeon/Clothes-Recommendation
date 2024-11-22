@@ -1,15 +1,14 @@
 package com.kjm.Weather_wear.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "weather_table") // 테이블 이름 지정
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor
 public class Weather {
 
@@ -17,6 +16,8 @@ public class Weather {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String forecastDate;      // 예보일자 (YYYYMMDD)
+    private String forecastTime;      // 예보시간 (HHmm)
     private Double temp; // 1시간 기온 (TMP)
     private Double minTemp; // 일 최저기온 (TMN)
     private Double maxTemp; // 일 최고기온 (TMX)
@@ -32,11 +33,14 @@ public class Weather {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "region_id", nullable = false)
+    @JsonIgnore
     private Region region; // Region과의 연관 관계
 
-    // 생성자: region을 제외한 모든 필드를 초기화
-    public Weather(Double temp, Double minTemp, Double maxTemp, Double rainAmount, Double humid,
+
+    public Weather(String forecastDate, String forecastTime, Double temp, Double minTemp, Double maxTemp, Double rainAmount, Double humid,
                    Double windSpeed, Double rainProbability, String rainType, String skyCondition, String lastUpdateTime) {
+        this.forecastDate = forecastDate;
+        this.forecastTime = forecastTime;
         this.temp = temp;
         this.minTemp = minTemp;
         this.maxTemp = maxTemp;

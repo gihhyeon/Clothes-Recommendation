@@ -1,19 +1,21 @@
 package com.kjm.Weather_wear.controller;
 
-
 import com.kjm.Weather_wear.dto.WeatherResponseDTO;
 import com.kjm.Weather_wear.entity.Region;
 import com.kjm.Weather_wear.entity.Weather;
 import com.kjm.Weather_wear.repository.RegionRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.BufferedReader;
@@ -23,7 +25,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -38,7 +40,7 @@ public class WeatherApiController {
 
     @GetMapping
     @Transactional
-    public ResponseEntity<WeatherResponseDTO> getRegionWeather(@RequestParam int nx, @RequestParam int ny) {
+    public ResponseEntity<List<WeatherResponseDTO>> getRegionWeather(@RequestParam int nx, @RequestParam int ny) {
 
         // 1. nx, ny를 기준으로 지역 조회
         Region region = regionRepository.findAll()
@@ -47,177 +49,178 @@ public class WeatherApiController {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("해당 좌표에 해당하는 지역이 없습니다."));
 
-        // 지역명을 가져오기 위해 toString() 활용
         String regionName = region.toString();
-
         log.info("Region found: {}", region);
 
-        // 2. 요청 시각 조회
+        // 2. 요청 시각 계산
         LocalDateTime now = LocalDateTime.now();
-        String yyyyMMdd = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String baseDate = calculateBaseDate(now);
+        String baseTime = calculateBaseTime(now);
 
-        // 유효한 base_time 배열
-        int[] validBaseTimes = {2, 5, 8, 11, 14, 17, 20, 23}; // 제공되는 base_time (시간)
+        // 3. 기존 데이터 확인
+        List<Weather> weatherList = region.getWeatherList();
+        Weather prevWeather = weatherList.isEmpty() ? null : weatherList.get(weatherList.size() - 1);
 
+        if (prevWeather != null && prevWeather.getLastUpdateTime() != null) {
+            if (prevWeather.getLastUpdateTime().equals(baseDate + " " + baseTime)) {
+                log.info("기존 데이터를 반환합니다.");
+                return ResponseEntity.ok(convertToWeatherResponseDTOs(weatherList, regionName));
+            }
+        }
+
+        // 4. API 요청
+        log.info("API 요청 발송 >>> 지역: {}, 연월일: {}, 시각: {}", region, baseDate, baseTime);
+
+        try {
+            List<Weather> newWeatherList = fetch72HourWeatherFromApi(region, baseDate, baseTime);
+
+            // 기존 데이터 삭제 후 새 데이터 추가
+            region.getWeatherList().clear();
+            newWeatherList.forEach(region::updateRegionWeather);
+            regionRepository.save(region);
+
+            // 응답 생성
+            return ResponseEntity.ok(convertToWeatherResponseDTOs(newWeatherList, regionName));
+
+        } catch (Exception e) {
+            log.error("날씨 정보를 불러오는 중 오류 발생: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    private List<Weather> fetch72HourWeatherFromApi(Region region, String baseDate, String baseTime) throws IOException {
+        String urlString = UriComponentsBuilder.fromHttpUrl("http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst")
+                .queryParam("serviceKey", serviceKey)
+                .queryParam("pageNo", "1")
+                .queryParam("numOfRows", "1000")
+                .queryParam("dataType", "JSON")
+                .queryParam("base_date", baseDate)
+                .queryParam("base_time", baseTime)
+                .queryParam("nx", region.getNx())
+                .queryParam("ny", region.getNy())
+                .build()
+                .toUriString();
+
+        log.info("Request URL: {}", urlString);
+
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Content-type", "application/json");
+
+        BufferedReader rd = new BufferedReader(new InputStreamReader(
+                conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300
+                        ? conn.getInputStream()
+                        : conn.getErrorStream()));
+
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = rd.readLine()) != null) {
+            sb.append(line);
+        }
+        rd.close();
+        conn.disconnect();
+
+        return parse72HourWeatherData(sb.toString(), region);
+    }
+
+    private List<Weather> parse72HourWeatherData(String jsonResponse, Region region) {
+        JSONObject response = new JSONObject(jsonResponse).optJSONObject("response");
+        if (response == null || !response.has("body")) {
+            log.error("API 응답에 body가 없습니다.");
+            return Collections.emptyList();
+        }
+
+        JSONObject body = response.getJSONObject("body");
+        JSONArray items = body.optJSONObject("items").optJSONArray("item");
+        if (items == null) {
+            log.error("API 응답에 item 데이터가 없습니다.");
+            return Collections.emptyList();
+        }
+
+        Map<String, Weather> hourlyData = new LinkedHashMap<>();
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject item = items.getJSONObject(i);
+            String fcstDate = item.getString("fcstDate"); // 예보일자
+            String fcstTime = item.getString("fcstTime"); // 예보시간
+            String category = item.getString("category"); // 데이터 카테고리
+            double fcstValue = item.optDouble("fcstValue", -1); // 값
+
+            String dateTimeKey = fcstDate + fcstTime; // 고유 키
+
+            // 기존 또는 새로운 Weather 객체 가져오기
+            Weather weather = hourlyData.getOrDefault(dateTimeKey, new Weather());
+            weather.setRegion(region);
+            weather.setForecastDate(fcstDate); // 예보일자 설정
+            weather.setForecastTime(fcstTime); // 예보시간 설정
+
+            // 데이터 카테고리에 따라 Weather 객체 업데이트
+            switch (category) {
+                case "TMP":
+                    weather.setTemp(fcstValue);
+                    break;
+                case "TMN":
+                    log.info("TMN (최저기온): {}", fcstValue);
+                    weather.setMinTemp(fcstValue);
+                    break;
+                case "TMX":
+                    log.info("TMX (최고기온): {}", fcstValue);
+
+                    weather.setMaxTemp(fcstValue);
+                    break;
+                case "PCP":
+                    weather.setRainAmount(fcstValue == -1 ? 0.0 : fcstValue);
+                    break;
+                case "REH":
+                    weather.setHumid(fcstValue);
+                    break;
+                case "WSD":
+                    weather.setWindSpeed(fcstValue);
+                    break;
+                case "POP":
+                    weather.setRainProbability(fcstValue);
+                    break;
+                case "PTY":
+                    weather.setRainType(String.valueOf((int) fcstValue));
+                    break;
+                case "SKY":
+                    weather.setSkyCondition(String.valueOf((int) fcstValue));
+                    break;
+            }
+
+            hourlyData.put(dateTimeKey, weather);
+        }
+
+        return new ArrayList<>(hourlyData.values()).stream()
+                .filter(weather -> weather.getForecastDate() != null && weather.getForecastTime() != null) // 필터링
+                .sorted(Comparator.comparing(Weather::getForecastDate).thenComparing(Weather::getForecastTime)) // 정렬
+                .limit(72) // 72시간 데이터 제한
+                .toList();
+    }
+
+    private List<WeatherResponseDTO> convertToWeatherResponseDTOs(List<Weather> weatherList, String regionName) {
+        return weatherList.stream()
+                .map(weather -> WeatherResponseDTO.builder()
+                        .regionName(regionName)
+                        .weather(weather)
+                        .build())
+                .toList();
+    }
+
+    private String calculateBaseDate(LocalDateTime now) {
+        return now.minusHours(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
+
+    private String calculateBaseTime(LocalDateTime now) {
+        int[] validBaseTimes = {2, 5, 8, 11, 14, 17, 20, 23};
         int hour = now.getHour();
         int min = now.getMinute();
         int baseTime = 0;
 
-
-        for (int i = 0; i < validBaseTimes.length; i++) {
-            int validHour = validBaseTimes[i];
-            // 현재 시간이 base_time의 제공 시간 이후라면 선택
-            if (hour > validHour || (hour == validHour && min >= 10)) {
-                baseTime = validHour;
-            } else {
-                break; // 현재 시간이 제공 기준 시간보다 작다면 이전 base_time을 유지
+        for (int validBaseTime : validBaseTimes) {
+            if (hour > validBaseTime || (hour == validBaseTime && min >= 10)) {
+                baseTime = validBaseTime;
             }
         }
-
-        // 자정 이전(첫 번째 제공 시간 이전) 처리
-        if (hour < validBaseTimes[0] || (hour == validBaseTimes[0] && min < 10)) {
-            baseTime = validBaseTimes[validBaseTimes.length - 1]; // 전날 마지막 base_time
-            yyyyMMdd = now.minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd")); // 날짜를 전날로 변경
-        }
-
-        String hourStr = String.format("%02d00", baseTime); // base_time을 "0200" 형식으로 변환
-        // currentChangeTime 정의
-        String currentChangeTime = yyyyMMdd + " " + String.format("%02d", baseTime);
-
-
-        log.info("Calculated base_date: {}, base_time: {}", yyyyMMdd, hourStr);
-
-        // 3. 기준 시각 조회 자료가 이미 존재하고 있다면 API 요청 없이 기존 자료 그대로 넘김
-        List<Weather> weatherList = region.getWeatherList();
-        Weather prevWeather = weatherList.isEmpty() ? null : weatherList.get(weatherList.size() - 1); // 최신 데이터 가져오기
-
-        if (prevWeather != null && prevWeather.getLastUpdateTime() != null) {
-            if (prevWeather.getLastUpdateTime().equals(currentChangeTime)) {
-                log.info("기존 자료를 재사용합니다.");
-                WeatherResponseDTO dto = WeatherResponseDTO.builder()
-                        .weather(prevWeather)
-                        .message("OK")
-                        .build();
-                return ResponseEntity.ok(dto);
-            }
-        }
-
-        log.info("API 요청 발송 >>> 지역: {}, 연월일: {}, 시각: {}", region, yyyyMMdd, hourStr);
-
-        try {
-            // UriComponentsBuilder 사용
-            String urlString = UriComponentsBuilder.fromHttpUrl("http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst")
-                    .queryParam("serviceKey", serviceKey)
-                    .queryParam("pageNo", "1")
-                    .queryParam("numOfRows", "1000")
-                    .queryParam("dataType", "JSON")
-                    .queryParam("base_date", yyyyMMdd)
-                    .queryParam("base_time", hourStr)
-                    .queryParam("nx", nx)
-                    .queryParam("ny", ny)
-                    .build()
-                    .toUriString();
-
-            URL url = new URL(urlString);
-            log.info("request url: {}", url);
-
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Content-type", "application/json");
-
-            BufferedReader rd;
-            if (conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
-                rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            } else {
-                rd = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-            }
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = rd.readLine()) != null) {
-                sb.append(line);
-            }
-            rd.close();
-            conn.disconnect();
-            String data = sb.toString();
-
-            log.info("API Response Data: {}", data);
-
-            //// 응답 수신 완료 ////
-            //// 응답 결과를 JSON 파싱 ////
-
-            Double temp = null;
-            Double minTemp = null;
-            Double maxTemp = null;
-            Double rainAmount = null;
-            Double humid = null;
-            Double windSpeed = null;
-            Double rainProbability = null; // 선언 및 초기화
-            String rainType = null;
-            String skyCondition = null;
-
-
-            JSONObject jObject = new JSONObject(data);
-            JSONObject response = jObject.getJSONObject("response");
-            JSONObject body = response.getJSONObject("body");
-            JSONObject items = body.getJSONObject("items");
-            JSONArray jArray = items.getJSONArray("item");
-
-            for(int i = 0; i < jArray.length(); i++) {
-                JSONObject obj = jArray.getJSONObject(i);
-                String category = obj.getString("category");
-                double fcstValue = obj.optDouble("fcstValue", -1);
-
-                switch (category) {
-                    case "TMP":
-                        temp = fcstValue;
-                        break;
-                    case "TMN":
-                        minTemp = fcstValue;
-                        break;
-                    case "TMX":
-                        maxTemp = fcstValue;
-                        break;
-                    case "PCP":
-                        rainAmount = fcstValue == -1 ? 0.0 : fcstValue;
-                        break;
-                    case "REH":
-                        humid = fcstValue;
-                        break;
-                    case "WSD":
-                        windSpeed = fcstValue;
-                        break;
-                    case "POP":
-                        rainProbability = fcstValue;
-                        break;
-                    case "PTY":
-                        rainType = String.valueOf((int) fcstValue); // 코드값 그대로 저장
-                        break;
-                    case "SKY":
-                        skyCondition = String.valueOf((int) fcstValue); // 코드값 그대로 저장
-                        break;
-                }
-            }
-
-            Weather weather = new Weather(temp, minTemp, maxTemp, rainAmount, humid, windSpeed,
-                    rainProbability, rainType, skyCondition, currentChangeTime);
-            region.updateRegionWeather(weather); // DB 업데이트
-            regionRepository.save(region);
-
-            WeatherResponseDTO dto = WeatherResponseDTO.builder()
-                    .weather(weather)
-                    .regionName(regionName)
-                    .message("OK")
-                    .build();
-            return ResponseEntity.ok(dto);
-        } catch (IOException e) {
-            WeatherResponseDTO dto = WeatherResponseDTO.builder()
-                    .weather(null)
-                    .regionName(regionName)
-                    .message("날씨 정보를 불러오는 중 오류가 발생했습니다")
-                    .build();
-            return ResponseEntity.ok(dto);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+        return String.format("%02d00", baseTime);
     }
 }

@@ -51,6 +51,6 @@ public class Region {
 
     @Override
     public String toString() {
-        return parentRegion + " " + childRegion + " " + grandChildRegion;
+        return String.join(" ", parentRegion, childRegion, grandChildRegion);
     }
 }
