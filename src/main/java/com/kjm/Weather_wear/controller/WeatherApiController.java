@@ -5,7 +5,6 @@ import com.kjm.Weather_wear.dto.WeatherResponseDTO;
 import com.kjm.Weather_wear.entity.Region;
 import com.kjm.Weather_wear.entity.Weather;
 import com.kjm.Weather_wear.repository.RegionRepository;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +23,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -31,7 +31,6 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 public class WeatherApiController {
 
-    private final EntityManager em;
     private final RegionRepository regionRepository;
 
     @Value("${weatherApi.serviceKey}")
@@ -89,7 +88,9 @@ public class WeatherApiController {
         log.info("Calculated base_date: {}, base_time: {}", yyyyMMdd, hourStr);
 
         // 3. 기준 시각 조회 자료가 이미 존재하고 있다면 API 요청 없이 기존 자료 그대로 넘김
-        Weather prevWeather = region.getWeather();
+        List<Weather> weatherList = region.getWeatherList();
+        Weather prevWeather = weatherList.isEmpty() ? null : weatherList.get(weatherList.size() - 1); // 최신 데이터 가져오기
+
         if (prevWeather != null && prevWeather.getLastUpdateTime() != null) {
             if (prevWeather.getLastUpdateTime().equals(currentChangeTime)) {
                 log.info("기존 자료를 재사용합니다.");

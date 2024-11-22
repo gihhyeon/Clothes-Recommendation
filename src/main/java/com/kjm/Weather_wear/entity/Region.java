@@ -14,6 +14,7 @@ import java.util.List;
 public class Region {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "region_id")
     private Long id; // 지역 순번
 
@@ -29,8 +30,9 @@ public class Region {
     private int nx; // x좌표
     private int ny; // y좌표
 
-    @Embedded
-    private Weather weather;
+    // Weather와 1:N 관계 설정
+    @OneToMany(mappedBy = "region", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Weather> weatherList = new ArrayList<>();
 
     public Region(Long id, String parentRegion, String childRegion, String grandChildRegion, int nx, int ny) {
         this.id = id;
@@ -41,8 +43,10 @@ public class Region {
         this.ny = ny;
     }
 
+    // Weather 추가 메서드
     public void updateRegionWeather(Weather weather) {
-        this.weather = weather;
+        this.weatherList.add(weather);
+        weather.setRegion(this); // 역참조 설정
     }
 
     @Override
