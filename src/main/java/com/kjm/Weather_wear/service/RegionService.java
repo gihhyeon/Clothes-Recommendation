@@ -25,6 +25,5 @@ public class RegionService {
                 regionDTO.getNx(),
                 regionDTO.getNy()
         );
-        regionRepository.save(region);
     }
 }

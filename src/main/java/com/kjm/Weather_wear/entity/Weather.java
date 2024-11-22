@@ -15,7 +15,6 @@ public class Weather {
     private Double temp; // 1시간 기온 (TMP)
     private Double minTemp; // 일 최저기온 (TMN)
     private Double maxTemp; // 일 최고기온 (TMX)
-    private Double rainAmount; // 1시간 강수량 (PCP)
     private Double humid; // 습도 (REH)
     private Double windSpeed; // 풍속 (WSD)
     private Double rainProbability; // 강수확률 (POP)
