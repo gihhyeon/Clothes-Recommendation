@@ -137,6 +137,8 @@ public class WeatherApiController {
             return Collections.emptyList();
         }
 
+        String lastUpdateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd HHmm"));
+
         Map<String, Weather> hourlyData = new LinkedHashMap<>();
         for (int i = 0; i < items.length(); i++) {
             JSONObject item = items.getJSONObject(i);
@@ -152,6 +154,7 @@ public class WeatherApiController {
             weather.setRegion(region);
             weather.setForecastDate(fcstDate); // 예보일자 설정
             weather.setForecastTime(fcstTime); // 예보시간 설정
+            weather.setLastUpdateTime(lastUpdateTime); // 마지막 업데이트 시간 설정
 
             // 데이터 카테고리에 따라 Weather 객체 업데이트
             switch (category) {
@@ -163,8 +166,7 @@ public class WeatherApiController {
                     weather.setMinTemp(fcstValue);
                     break;
                 case "TMX":
-                    log.info("TMX (최고기온): {}", fcstValue);
-
+                    log.info("TMN (최고기온): {}", fcstValue);
                     weather.setMaxTemp(fcstValue);
                     break;
                 case "PCP":

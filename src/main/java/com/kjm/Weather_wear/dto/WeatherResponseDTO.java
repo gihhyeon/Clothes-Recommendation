@@ -10,8 +10,8 @@ import java.util.List;
 @Builder
 public class WeatherResponseDTO {
 
-    private Weather weather;
-    private String message;
     private String regionName;
+    private String message;
+    private Weather weather;
 
 }
