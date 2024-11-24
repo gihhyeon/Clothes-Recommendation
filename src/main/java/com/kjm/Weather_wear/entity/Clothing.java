@@ -21,10 +21,10 @@ public class Clothing {
 
     private String category;
     private String itemName;
-    private int minTemp;         // 착용 가능한 최소 기온
-    private int maxTemp;         // 착용 가능한 최대 기온
+    private Double minTemp;         // 착용 가능한 최소 기온
+    private Double maxTemp;         // 착용 가능한 최대 기온
 
-    public Clothing(String category, String itemName, int minTemp, int maxTemp) {
+    public Clothing(String category, String itemName, Double minTemp, Double maxTemp) {
         this.category = category;
         this.itemName = itemName;
         this.minTemp = maxTemp;

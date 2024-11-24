@@ -61,6 +61,8 @@ public class WeatherApiController {
         List<Weather> weatherList = region.getWeatherList();
         Weather prevWeather = weatherList.isEmpty() ? null : weatherList.get(weatherList.size() - 1);
 
+        log.info("Region Weather List: {}", region.getWeatherList());
+
         if (prevWeather != null && prevWeather.getLastUpdateTime() != null) {
             if (prevWeather.getLastUpdateTime().equals(baseDate + " " + baseTime)) {
                 log.info("기존 데이터를 반환합니다.");
@@ -162,12 +164,12 @@ public class WeatherApiController {
                     weather.setTemp(fcstValue);
                     break;
                 case "TMN":
-                    log.info("TMN (최저기온): {}", fcstValue);
                     weather.setMinTemp(fcstValue);
+                    log.info("TMN (최저기온): {}", fcstValue);
                     break;
                 case "TMX":
-                    log.info("TMN (최고기온): {}", fcstValue);
                     weather.setMaxTemp(fcstValue);
+                    log.info("TMN (최고기온): {}", fcstValue);
                     break;
                 case "PCP":
                     weather.setRainAmount(fcstValue == -1 ? 0.0 : fcstValue);

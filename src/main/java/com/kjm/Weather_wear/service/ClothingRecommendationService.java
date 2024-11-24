@@ -1,12 +1,13 @@
 package com.kjm.Weather_wear.service;
 
-import com.kjm.Weather_wear.dto.ClothingResponseDTO;
 import com.kjm.Weather_wear.entity.Clothing;
 import com.kjm.Weather_wear.repository.ClothingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -14,25 +15,38 @@ public class ClothingRecommendationService {
 
     private final ClothingRepository clothingRepository;
 
-    public ClothingResponseDTO recommendClothing(double temperature, String userType) {
-        // 1. 사용자 민감도를 반영한 기온 조정
-        int adjustedTemperature = adjustTemperatureForUserType((int) temperature, userType);
+    /**
+     * 기온과 사용자 타입에 따라 추천 의상을 반환합니다.
+     *
+     * @param temperatures 1시간 단위의 예보 기온 리스트
+     * @param userType 사용자의 타입 (추위를 잘 타는 사람, 평균, 더위를 잘 타는 사람)
+     * @return 추천 의상 리스트
+     */
+    public Map<String, List<String>> getClothingRecommendations(List<Double> temperatures, String userType) {
+        Map<String, List<String>> clothingRecommendations = new LinkedHashMap<>();
 
-        // 2. DB에서 추천 기온에 맞는 옷 조회
-        List<Clothing> recommendedClothing = clothingRepository.findByTemperatureRange(adjustedTemperature);
+        for (Double temperature : temperatures) {
+            double adjustedTemp = getUserTypeAdjustment(temperature, userType);
 
-        // 3. DTO로 변환하여 반환
-        return new ClothingResponseDTO(adjustedTemperature, recommendedClothing);
+            List<String> recommendedClothes = clothingRepository.findByTemperatureRange(adjustedTemp)
+                    .stream()
+                    .map(clothing -> String.format("%s - %s", clothing.getCategory(), clothing.getItemName()))
+                    .toList();
+
+            clothingRecommendations.put(String.format("%.1f°C", adjustedTemp), recommendedClothes);
+        }
+
+        return clothingRecommendations;
     }
 
-    private int adjustTemperatureForUserType(int temperature, String userType) {
+    private double getUserTypeAdjustment(Double temp, String userType) {
         switch (userType) {
-            case "더위를 잘 타는 사람":
-                return temperature - 3;
-            case "추위를 잘 타는 사람":
-                return temperature + 3;
-            default: // 평균
-                return temperature;
+            case "coldSensitive":
+                return temp - 2.0; // 추위를 잘 타는 사람
+            case "hotSensitive":
+                return temp + 2.0; // 더위를 잘 타는 사람
+            default:
+                return temp; // 평균
         }
     }
 }
