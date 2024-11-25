@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -114,16 +116,27 @@ public class DataLoader implements CommandLineRunner {
 //    }
 
     private void addClothingIfNotExists(String category, String itemName, Double minTemp, Double maxTemp) {
-        // 중복 확인 (카테고리, 아이템 이름, 온도 범위를 기준으로)
-        boolean exists = clothingRepository.existsByCategoryAndItemNameAndMinTempAndMaxTemp(category, itemName, minTemp, maxTemp);
+        log.info("Received data -> Category: {}, Item: {}, MinTemp: {}, MaxTemp: {}",
+                category, itemName, minTemp, maxTemp);
 
-        if (!exists) {
-            // 존재하지 않는 경우 데이터 삽입
-            clothingRepository.save(new Clothing(category, itemName, minTemp, maxTemp));
-            log.info("Clothing added: {} - {} ({}°C to {}°C)", category, itemName, minTemp, maxTemp);
+        if (minTemp == null || maxTemp == null || minTemp > maxTemp) {
+            throw new IllegalArgumentException("Invalid temperature range: MinTemp=" + minTemp + ", MaxTemp=" + maxTemp);
+        }
+
+        // 동일한 아이템 이름을 가진 데이터 가져오기
+        List<Clothing> existingClothingList = clothingRepository.findByCategoryAndItemName(category, itemName);
+
+        boolean isOverlapping = existingClothingList.stream().anyMatch(existing ->
+                !(existing.getMaxTemp() < minTemp || existing.getMinTemp() > maxTemp) // 범위가 겹치는 경우
+        );
+
+        if (isOverlapping) {
+            log.info("Clothing with overlapping range exists: {} - {} ({}°C to {}°C)",
+                    category, itemName, minTemp, maxTemp);
         } else {
-            // 이미 존재하는 경우 로그 출력
-            log.info("Clothing already exists: {} - {} ({}°C to {}°C)", category, itemName, minTemp, maxTemp);
+            Clothing newClothing = new Clothing(category, itemName, minTemp, maxTemp);
+            clothingRepository.save(newClothing);
+            log.info("Clothing added: {} - {} ({}°C to {}°C)", category, itemName, minTemp, maxTemp);
         }
     }
 }

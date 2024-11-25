@@ -1,6 +1,5 @@
 package com.kjm.Weather_wear.service;
 
-import com.kjm.Weather_wear.entity.Clothing;
 import com.kjm.Weather_wear.repository.ClothingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

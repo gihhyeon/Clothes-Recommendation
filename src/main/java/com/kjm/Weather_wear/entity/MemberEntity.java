@@ -4,6 +4,9 @@ import com.kjm.Weather_wear.dto.MemberDTO;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -52,5 +55,9 @@ public class MemberEntity {
 
         return memberEntity;
     }
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Evaluation> evaluations = new ArrayList<>();
+
 
 }
