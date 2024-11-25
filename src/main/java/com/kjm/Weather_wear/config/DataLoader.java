@@ -73,7 +73,6 @@ public class DataLoader implements CommandLineRunner {
         addClothingIfNotExists("하의", "청바지", 9.0, 11.0);
         addClothingIfNotExists("하의", "면바지", 9.0, 11.0);
         addClothingIfNotExists("복합", "검은색 스타킹", 9.0, 11.0);
-        addClothingIfNotExists("복합", "기모 바지", 9.0, 11.0);
         addClothingIfNotExists("복합", "레이어드 니트", 9.0, 11.0);
 
         // 5~8도
@@ -82,6 +81,7 @@ public class DataLoader implements CommandLineRunner {
         addClothingIfNotExists("하의", "레깅스", 5.0, 8.0);
         addClothingIfNotExists("하의", "청바지", 5.0, 8.0);
         addClothingIfNotExists("하의", "두꺼운 바지", 5.0, 8.0);
+        addClothingIfNotExists("복합", "기모 바지", 5.0, 8.0);
         addClothingIfNotExists("복합", "기모 스타킹", 5.0, 8.0);
         addClothingIfNotExists("복합", "스카프", 5.0, 8.0);
         addClothingIfNotExists("복합", "플리스", 5.0, 8.0);

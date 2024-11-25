@@ -1,8 +1,6 @@
 package com.kjm.Weather_wear.controller;
 
-import com.kjm.Weather_wear.dto.ClothingResponseDTO;
 import com.kjm.Weather_wear.dto.WeatherResponseDTO;
-import com.kjm.Weather_wear.entity.Clothing;
 import com.kjm.Weather_wear.service.ClothingRecommendationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,10 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -28,7 +23,7 @@ public class ClothingController {
     private final ClothingRecommendationService clothingRecommendationService;
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getClothingRecommendations(
+    public ResponseEntity<List<Map<String, Object>>> getClothingRecommendations(
             @RequestParam int nx,
             @RequestParam int ny,
             @RequestParam String userType) {
@@ -41,7 +36,7 @@ public class ClothingController {
 
             if (weatherResponse.getBody() == null || weatherResponse.getBody().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(Map.of("message", "날씨 정보를 가져올 수 없습니다."));
+                        .body(List.of(Map.of("message", "날씨 정보를 가져올 수 없습니다.")));
             }
 
             List<WeatherResponseDTO> weatherList = weatherResponse.getBody();
@@ -57,25 +52,38 @@ public class ClothingController {
 
             if (temperatures.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                        .body(Map.of("message", "예보 데이터가 없습니다."));
+                        .body(List.of(Map.of("message", "예보 데이터가 없습니다.")));
             }
 
             // 4. ClothingRecommendationService를 사용해 옷 추천 생성
             Map<String, List<String>> clothingRecommendations =
                     clothingRecommendationService.getClothingRecommendations(temperatures, userType);
 
-            // 5. 응답 데이터 생성
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.put("regionName", regionName);
-            response.put("weather", weatherList); // 모든 날씨 정보를 포함
-            response.put("clothingRecommendations", clothingRecommendations);
+            // 5. 응답 데이터 생성 (List 형태)
+            List<Map<String, Object>> responseList = new ArrayList<>();
 
-            return ResponseEntity.ok(response);
+            // 지역 정보 추가
+            Map<String, Object> regionInfo = new LinkedHashMap<>();
+            regionInfo.put("regionName", regionName);
+            regionInfo.put("weather", weatherList.stream()
+                    .map(WeatherResponseDTO::getWeather) // Weather 객체만 전달
+                    .toList());
+            responseList.add(regionInfo);
+
+            // 옷 추천 정보 추가
+            clothingRecommendations.forEach((temp, recommendations) -> {
+                Map<String, Object> recommendationEntry = new LinkedHashMap<>();
+                recommendationEntry.put("temperature", temp);
+                recommendationEntry.put("recommendations", recommendations);
+                responseList.add(recommendationEntry);
+            });
+
+            return ResponseEntity.ok(responseList);
 
         } catch (Exception e) {
             log.error("Clothing recommendation 에러: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "추천 데이터를 가져오는 중 문제가 발생했습니다."));
+                    .body(List.of(Map.of("message", "추천 데이터를 가져오는 중 문제가 발생했습니다.")));
         }
     }
 }
