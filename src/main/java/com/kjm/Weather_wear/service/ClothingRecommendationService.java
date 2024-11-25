@@ -28,9 +28,11 @@ public class ClothingRecommendationService {
         for (Double temperature : temperatures) {
             double adjustedTemp = getUserTypeAdjustment(temperature, userType);
 
-            List<String> recommendedClothes = clothingRepository.findByTemperatureRange(adjustedTemp)
+            // 온도 범위에 따라 중복된 아이템도 포함하도록 처리
+            List<String> recommendedClothes = clothingRepository.findAllByTemperatureRange(adjustedTemp)
                     .stream()
                     .map(clothing -> String.format("%s - %s", clothing.getCategory(), clothing.getItemName()))
+                    .distinct() // 중복 아이템 제거
                     .toList();
 
             clothingRecommendations.put(String.format("%.1f°C", adjustedTemp), recommendedClothes);
@@ -42,9 +44,9 @@ public class ClothingRecommendationService {
     private double getUserTypeAdjustment(Double temp, String userType) {
         switch (userType) {
             case "coldSensitive":
-                return temp - 2.0; // 추위를 잘 타는 사람
+                return temp - 3.0; // 추위를 잘 타는 사람
             case "hotSensitive":
-                return temp + 2.0; // 더위를 잘 타는 사람
+                return temp + 3.0; // 더위를 잘 타는 사람
             default:
                 return temp; // 평균
         }

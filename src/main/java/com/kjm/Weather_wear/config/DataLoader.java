@@ -3,9 +3,11 @@ package com.kjm.Weather_wear.config;
 import com.kjm.Weather_wear.entity.Clothing;
 import com.kjm.Weather_wear.repository.ClothingRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataLoader implements CommandLineRunner {
@@ -37,7 +39,6 @@ public class DataLoader implements CommandLineRunner {
         addClothingIfNotExists("상의", "후드티", 20.0, 22.0);
         addClothingIfNotExists("하의", "면바지", 20.0, 22.0);
         addClothingIfNotExists("하의", "슬랙스", 20.0, 22.0);
-        addClothingIfNotExists("하의", "7부 바지", 20.0, 22.0);
         addClothingIfNotExists("하의", "청바지", 20.0, 22.0);
 
         // 17~19도
@@ -72,7 +73,6 @@ public class DataLoader implements CommandLineRunner {
         addClothingIfNotExists("아우터", "트렌치 코트", 9.0, 11.0);
         addClothingIfNotExists("하의", "청바지", 9.0, 11.0);
         addClothingIfNotExists("하의", "면바지", 9.0, 11.0);
-        addClothingIfNotExists("복합", "검은색 스타킹", 9.0, 11.0);
         addClothingIfNotExists("복합", "레이어드 니트", 9.0, 11.0);
 
         // 5~8도
@@ -98,17 +98,32 @@ public class DataLoader implements CommandLineRunner {
         addClothingIfNotExists("복합", "방한용품", -10.0, 4.0);
     }
 
+//    private void addClothingIfNotExists(String category, String itemName, Double minTemp, Double maxTemp) {
+//        // 동일한 카테고리, 아이템 이름, 온도 범위가 중복되지 않도록 체크
+//        if (!clothingRepository.existsByCategoryAndItemNameAndMinTempAndMaxTemp(category, itemName, minTemp, maxTemp)) {
+//            clothingRepository.save(new Clothing(category, itemName, minTemp, maxTemp));
+//        } else {
+//            // 이미 존재하는 경우, 업데이트 로직 추가
+//            Clothing existingClothing = clothingRepository.findByCategoryAndItemName(category, itemName);
+//            if (existingClothing != null) {
+//                existingClothing.setMinTemp(minTemp);
+//                existingClothing.setMaxTemp(maxTemp);
+//                clothingRepository.save(existingClothing);
+//            }
+//        }
+//    }
+
     private void addClothingIfNotExists(String category, String itemName, Double minTemp, Double maxTemp) {
-        if (!clothingRepository.existsByCategoryAndItemName(category, itemName)) {
+        // 중복 확인 (카테고리, 아이템 이름, 온도 범위를 기준으로)
+        boolean exists = clothingRepository.existsByCategoryAndItemNameAndMinTempAndMaxTemp(category, itemName, minTemp, maxTemp);
+
+        if (!exists) {
+            // 존재하지 않는 경우 데이터 삽입
             clothingRepository.save(new Clothing(category, itemName, minTemp, maxTemp));
+            log.info("Clothing added: {} - {} ({}°C to {}°C)", category, itemName, minTemp, maxTemp);
         } else {
-            // 이미 존재하는 경우, 업데이트 로직 추가
-            Clothing existingClothing = clothingRepository.findByCategoryAndItemName(category, itemName);
-            if (existingClothing != null) {
-                existingClothing.setMinTemp(minTemp);
-                existingClothing.setMaxTemp(maxTemp);
-                clothingRepository.save(existingClothing);
-            }
+            // 이미 존재하는 경우 로그 출력
+            log.info("Clothing already exists: {} - {} ({}°C to {}°C)", category, itemName, minTemp, maxTemp);
         }
     }
 }
