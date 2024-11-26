@@ -7,27 +7,33 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ClothingRepository extends JpaRepository<Clothing, Long> {
-//    boolean existsByCategoryAndItemName(String category, String itemName);
-//    //Clothing findByCategoryAndItemName(String category, String itemName); // 중복된 데이터를 조회
-//    boolean existsByCategoryAndItemNameAndMinTempAndMaxTemp(String category, String itemName, Double minTemp, Double maxTemp);
-//
-//    // 기존 데이터 가져오기 (중복 제거)
-//    List<Clothing> findByCategoryAndItemName(String category, String itemName);
-//    //@Query("SELECT c FROM Clothing c WHERE :temp BETWEEN c.minTemp AND c.maxTemp")
-//    //List<Clothing> findByTemperatureRange(@Param("temp") double temp);
-//
-//    @Query("SELECT c FROM Clothing c WHERE c.minTemp <= :temp AND c.maxTemp >= :temp")
-//    List<Clothing> findAllByTemperatureRange(@Param("temp") double temp);
-
-    // 기존 메서드
-    boolean existsByCategoryAndItemNameAndMinTempAndMaxTemp(String category, String itemName, Double minTemp, Double maxTemp);
-
     // 특정 온도 범위에 해당하는 의류 목록 조회
     @Query("SELECT c FROM Clothing c WHERE c.minTemp <= :temp AND c.maxTemp >= :temp")
     List<Clothing> findAllByTemperatureRange(@Param("temp") double temp);
 
-    List<Clothing> findByCategoryAndItemName(String category, String itemName);
+    /**
+     * 특정 카테고리와 아이템 이름, 온도 범위에 해당하는 데이터가 존재하는지 확인
+     *
+     * @param category 카테고리
+     * @param itemName 아이템 이름
+     * @param minTemp 최소 온도
+     * @param maxTemp 최대 온도
+     * @return 데이터 존재 여부
+     */
+    boolean existsByCategoryAndItemNameAndMinTempAndMaxTemp(String category, String itemName, Double minTemp, Double maxTemp);
+
+    /**
+     * 특정 카테고리와 아이템 이름으로 데이터를 조회
+     *
+     * @param category 카테고리
+     * @param itemName 아이템 이름
+     * @return Clothing 객체
+     */
+    Clothing findByCategoryAndItemName(String category, String itemName);
+
+
 }

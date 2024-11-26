@@ -3,7 +3,6 @@ package com.kjm.Weather_wear.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
 
 @Entity
 @Table(name = "evaluations")

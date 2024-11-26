@@ -3,8 +3,6 @@ package com.kjm.Weather_wear.service;
 import com.kjm.Weather_wear.dto.RegionDTO;
 import com.kjm.Weather_wear.entity.Region;
 import com.kjm.Weather_wear.repository.RegionRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
