@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class ApiController { 
+public class RegionApiController {
 
     @Value("${resources.location}")
     private String resourceLocation;
