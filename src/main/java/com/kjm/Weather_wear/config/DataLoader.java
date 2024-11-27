@@ -31,13 +31,11 @@ public class DataLoader implements CommandLineRunner {
         addClothingIfNotExists("상의", "얇은 긴팔 티셔츠", 23.0, 26.0);
 
         // 20~22도
-        addClothingIfNotExists("아우터", "얇은 가디건", 20.0, 22.0);
         addClothingIfNotExists("상의", "긴팔 티셔츠", 20.0, 22.0);
         addClothingIfNotExists("상의", "셔츠", 20.0, 22.0);
         addClothingIfNotExists("상의", "블라우스", 20.0, 22.0);
 
         // 17~19도
-        addClothingIfNotExists("아우터", "얇은 니트", 17.0, 19.0);
         addClothingIfNotExists("아우터", "얇은 가디건", 17.0, 19.0);
         addClothingIfNotExists("아우터", "얇은 재킷", 17.0, 19.0);
         addClothingIfNotExists("아우터", "바람막이", 17.0, 19.0);
@@ -55,6 +53,7 @@ public class DataLoader implements CommandLineRunner {
         //큰 범위
         addClothingIfNotExists("하의", "반바지", 25.0, 50.0);
         addClothingIfNotExists("상의", "반팔 티셔츠", 25.0, 50.0);
+        addClothingIfNotExists("아우터", "얇은 가디건", 17.0, 22.0);
         addClothingIfNotExists("아우터", "야상", 9.0, 16.0);
         addClothingIfNotExists("아우터", "재킷", 9.0, 16.0);
         addClothingIfNotExists("복합", "플리스", 5.0, 16.0);
