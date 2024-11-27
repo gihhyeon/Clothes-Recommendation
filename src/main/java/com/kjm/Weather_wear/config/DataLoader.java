@@ -21,14 +21,14 @@ public class DataLoader implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // 28도 이상
-        addClothingIfNotExists("상의", "민소매", 28.0, 50.0);
-        addClothingIfNotExists("하의", "짧은 치마", 28.0, 50.0);
-        addClothingIfNotExists("복합", "민소매 원피스", 28.0, 50.0);
-        addClothingIfNotExists("복합", "린넨 재질 옷", 28.0, 50.0);
+        addClothingIfNotExists("상의", "민소매", 27.0, 50.0);
+        addClothingIfNotExists("하의", "짧은 치마", 27.0, 50.0);
+        addClothingIfNotExists("복합", "민소매 원피스", 27.0, 50.0);
+        addClothingIfNotExists("복합", "린넨 재질 옷", 27.0, 50.0);
 
         // 23~27도
-        addClothingIfNotExists("상의", "얇은 셔츠", 23.0, 27.0);
-        addClothingIfNotExists("상의", "얇은 긴팔 티셔츠", 23.0, 27.0);
+        addClothingIfNotExists("상의", "얇은 셔츠", 23.0, 26.0);
+        addClothingIfNotExists("상의", "얇은 긴팔 티셔츠", 23.0, 26.0);
 
         // 20~22도
         addClothingIfNotExists("아우터", "얇은 가디건", 20.0, 22.0);
@@ -43,24 +43,22 @@ public class DataLoader implements CommandLineRunner {
         addClothingIfNotExists("아우터", "바람막이", 17.0, 19.0);
 
         // 12~16도
-        addClothingIfNotExists("아우터", "재킷", 12.0, 16.0);
         addClothingIfNotExists("아우터", "가디건", 12.0, 16.0);
-        addClothingIfNotExists("아우터", "야상", 12.0, 16.0);
         addClothingIfNotExists("상의", "셔츠", 12.0, 16.0);
         addClothingIfNotExists("복합", "스타킹", 12.0, 16.0);
         addClothingIfNotExists("복합", "니트", 12.0, 16.0);
 
         // 9~11도
-        addClothingIfNotExists("아우터", "야상", 9.0, 11.0);
         addClothingIfNotExists("아우터", "점퍼", 9.0, 11.0);
         addClothingIfNotExists("아우터", "트렌치 코트", 9.0, 11.0);
 
         //큰 범위
-        addClothingIfNotExists("하의", "반바지", 23.0, 50.0);
-        addClothingIfNotExists("상의", "반팔 티셔츠", 23.0, 50.0);
+        addClothingIfNotExists("하의", "반바지", 25.0, 50.0);
+        addClothingIfNotExists("상의", "반팔 티셔츠", 25.0, 50.0);
+        addClothingIfNotExists("아우터", "야상", 9.0, 16.0);
         addClothingIfNotExists("아우터", "재킷", 9.0, 16.0);
         addClothingIfNotExists("복합", "플리스", 5.0, 16.0);
-        addClothingIfNotExists("하의", "면바지", 5.0, 27.0);
+        addClothingIfNotExists("하의", "면바지", 5.0, 26.0);
         addClothingIfNotExists("상의", "맨투맨", 5.0, 22.0);
         addClothingIfNotExists("하의", "청바지", 5.0, 22.0);
         addClothingIfNotExists("하의", "슬랙스", 5.0, 22.0);

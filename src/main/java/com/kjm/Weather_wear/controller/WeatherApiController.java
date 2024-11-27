@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -141,7 +142,17 @@ public class WeatherApiController {
 
         String lastUpdateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd HHmm"));
 
+        // 날짜별 최저기온(TMN) 및 최고기온(TMX)을 저장할 Map
+        Map<String, Double> dailyMinTemps = new HashMap<>();
+        Map<String, Double> dailyMaxTemps = new HashMap<>();
+
+        // 오늘의 최저 기온을 별도로 저장
+        String todayDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        Double todayMinTemp = null;
+
+        // 시간별 데이터를 저장할 Map
         Map<String, Weather> hourlyData = new LinkedHashMap<>();
+
         for (int i = 0; i < items.length(); i++) {
             JSONObject item = items.getJSONObject(i);
             String fcstDate = item.getString("fcstDate"); // 예보일자
@@ -164,12 +175,19 @@ public class WeatherApiController {
                     weather.setTemp(fcstValue);
                     break;
                 case "TMN":
-                    weather.setMinTemp(fcstValue);
-                    log.info("TMN (최저기온): {}", fcstValue);
+                    if (fcstDate.equals(todayDate)) {
+                        todayMinTemp = fcstValue; // 오늘의 최저 기온 저장
+                    }
+                    dailyMinTemps.put(fcstDate,
+                            dailyMinTemps.containsKey(fcstDate)
+                                    ? Math.min(dailyMinTemps.get(fcstDate), fcstValue)
+                                    : fcstValue);
                     break;
                 case "TMX":
-                    weather.setMaxTemp(fcstValue);
-                    log.info("TMN (최고기온): {}", fcstValue);
+                    dailyMaxTemps.put(fcstDate,
+                            dailyMaxTemps.containsKey(fcstDate)
+                                    ? Math.max(dailyMaxTemps.get(fcstDate), fcstValue)
+                                    : fcstValue);
                     break;
                 case "PCP":
                     weather.setRainAmount(fcstValue == -1 ? 0.0 : fcstValue);
@@ -192,6 +210,23 @@ public class WeatherApiController {
             }
 
             hourlyData.put(dateTimeKey, weather);
+        }
+
+        // 날짜별 최저/최고 기온 설정
+        hourlyData.values().forEach(weather -> {
+            String date = weather.getForecastDate();
+            if (dailyMinTemps.containsKey(date)) {
+                weather.setMinTemp(dailyMinTemps.get(date));
+            }
+            if (dailyMaxTemps.containsKey(date)) {
+                weather.setMaxTemp(dailyMaxTemps.get(date));
+            }
+        });
+
+        // 오늘의 최저 기온이 누락된 경우, 캐싱된 값을 활용
+        if (todayMinTemp == null && dailyMinTemps.containsKey(todayDate)) {
+            todayMinTemp = dailyMinTemps.get(todayDate);
+            log.warn("오늘의 최저 기온이 누락되어 캐싱된 값({})을 사용합니다.", todayMinTemp);
         }
 
         return new ArrayList<>(hourlyData.values()).stream()

@@ -10,7 +10,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor
-//@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Weather {
 
     @Id
