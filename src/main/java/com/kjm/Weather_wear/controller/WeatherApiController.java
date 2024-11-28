@@ -146,9 +146,10 @@ public class WeatherApiController {
         Map<String, Double> dailyMinTemps = new HashMap<>();
         Map<String, Double> dailyMaxTemps = new HashMap<>();
 
-        // 오늘의 최저 기온을 별도로 저장
+        // 오늘의 최저, 최고 기온을 별도로 저장
         String todayDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         Double todayMinTemp = null;
+        Double todayMaxTemp = null;
 
         // 시간별 데이터를 저장할 Map
         Map<String, Weather> hourlyData = new LinkedHashMap<>();
@@ -184,6 +185,9 @@ public class WeatherApiController {
                                     : fcstValue);
                     break;
                 case "TMX":
+                    if (fcstDate.equals(todayDate)) {
+                        todayMaxTemp = fcstValue; // 오늘의 최고 기온 저장
+                    }
                     dailyMaxTemps.put(fcstDate,
                             dailyMaxTemps.containsKey(fcstDate)
                                     ? Math.max(dailyMaxTemps.get(fcstDate), fcstValue)
@@ -227,6 +231,12 @@ public class WeatherApiController {
         if (todayMinTemp == null && dailyMinTemps.containsKey(todayDate)) {
             todayMinTemp = dailyMinTemps.get(todayDate);
             log.warn("오늘의 최저 기온이 누락되어 캐싱된 값({})을 사용합니다.", todayMinTemp);
+        }
+
+        // 오늘의 최고 기온이 누락된 경우, 캐싱된 값을 활용
+        if (todayMaxTemp == null && dailyMinTemps.containsKey(todayDate)) {
+            todayMaxTemp = dailyMinTemps.get(todayDate);
+            log.warn("오늘의 최저 기온이 누락되어 캐싱된 값({})을 사용합니다.", todayMaxTemp);
         }
 
         return new ArrayList<>(hourlyData.values()).stream()
