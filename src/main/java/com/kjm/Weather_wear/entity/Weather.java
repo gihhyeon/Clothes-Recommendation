@@ -37,22 +37,6 @@ public class Weather {
     private Region region; // Region과의 연관 관계
 
 
-    public Weather(String forecastDate, String forecastTime, Double temp, Double minTemp, Double maxTemp, Double rainAmount, Double humid,
-                   Double windSpeed, Double rainProbability, String rainType, String skyCondition, String lastUpdateTime) {
-        this.forecastDate = forecastDate;
-        this.forecastTime = forecastTime;
-        this.temp = temp;
-        this.minTemp = minTemp;
-        this.maxTemp = maxTemp;
-        this.rainAmount = rainAmount;
-        this.humid = humid;
-        this.windSpeed = windSpeed;
-        this.rainProbability = rainProbability;
-        this.rainType = rainType;
-        this.skyCondition = skyCondition;
-        this.lastUpdateTime = lastUpdateTime;
-    }
-
     public void setRegion(Region region) {
         this.region = region;
     }

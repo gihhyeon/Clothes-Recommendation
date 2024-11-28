@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/members") // RESTful 규칙에 따라 URL 설정
+@RequestMapping("/api/members")
 public class MemberController {
     private final MemberService memberService;
 

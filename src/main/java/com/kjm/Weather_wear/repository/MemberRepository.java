@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface MemberRepository extends JpaRepository<MemberEntity, String> {
-    // 이메일로 회원 정보 조회 (select * from member_table where member_email=?)
+    // Id로 회원 정보 조회 (select * from member_table where member_email=?)
     Optional<MemberEntity> findByMemberEmail(String memberEmail);
 }

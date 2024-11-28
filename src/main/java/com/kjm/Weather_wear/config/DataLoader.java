@@ -2,14 +2,11 @@ package com.kjm.Weather_wear.config;
 
 import com.kjm.Weather_wear.entity.Clothing;
 import com.kjm.Weather_wear.repository.ClothingRepository;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -19,7 +16,7 @@ public class DataLoader implements CommandLineRunner {
     private final ClothingRepository clothingRepository;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         // 28도 이상
         addClothingIfNotExists("상의", "민소매", 27.0, 50.0);
         addClothingIfNotExists("하의", "짧은 치마", 27.0, 50.0);

@@ -25,14 +25,4 @@ public interface ClothingRepository extends JpaRepository<Clothing, Long> {
      */
     boolean existsByCategoryAndItemNameAndMinTempAndMaxTemp(String category, String itemName, Double minTemp, Double maxTemp);
 
-    /**
-     * 특정 카테고리와 아이템 이름으로 데이터를 조회
-     *
-     * @param category 카테고리
-     * @param itemName 아이템 이름
-     * @return Clothing 객체
-     */
-    Clothing findByCategoryAndItemName(String category, String itemName);
-
-
 }
