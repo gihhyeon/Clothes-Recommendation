@@ -15,7 +15,7 @@ public class ClothingRecommendationService {
     private final ClothingRepository clothingRepository;
 
     /**
-     * 기온과 사용자 타입에 따라 추천 의상을 반환합니다.
+     * 기온과 사용자 타입에 따라 추천 의상을 반환
      *
      * @param temperatures 1시간 단위의 예보 기온 리스트
      * @param userType 사용자의 타입 (추위를 잘 타는 사람, 평균, 더위를 잘 타는 사람)
