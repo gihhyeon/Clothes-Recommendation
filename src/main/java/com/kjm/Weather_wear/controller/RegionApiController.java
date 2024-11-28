@@ -2,7 +2,6 @@ package com.kjm.Weather_wear.controller;
 
 import com.kjm.Weather_wear.dto.RegionDTO;
 import com.kjm.Weather_wear.service.RegionService;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,8 +30,6 @@ public class RegionApiController {
     private String resourceLocation;
 
     private final RegionService regionService;
-
-    private final EntityManager em;
 
     @PostMapping("/region")
     @Transactional
