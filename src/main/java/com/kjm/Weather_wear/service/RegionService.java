@@ -2,12 +2,10 @@ package com.kjm.Weather_wear.service;
 
 import com.kjm.Weather_wear.dto.RegionDTO;
 import com.kjm.Weather_wear.entity.Region;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class RegionService {
 
     @Transactional
