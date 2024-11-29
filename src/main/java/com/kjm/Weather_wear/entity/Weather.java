@@ -28,7 +28,7 @@ public class Weather {
     private String rainType; // 강수형태 (PTY)
     private String skyCondition; // 하늘상태 (SKY)
 
-    private String lastUpdateTime; // 마지막 갱신 시각 (시간 단위)
+    private String lastUpdateTime; // 최신 갱신 시각
 
 
     @ManyToOne(fetch = FetchType.LAZY)
